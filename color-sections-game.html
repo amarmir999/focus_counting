@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colored Grid Focus Counting Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f9ff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2c5282;
+            margin-bottom: 10px;
+        }
+        
+        #game-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        #instructions {
+            background-color: #ebf8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #canvas-container {
+            width: 500px;
+            height: 400px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            border: 2px solid #4299e1;
+            background-color: white;
+        }
+        
+        .grid-hidden {
+            background-color: #e2e8f0 !important;
+        }
+        
+        .memory-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            color: #e53e3e;
+            display: none;
+        }
+        
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .number-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .number-btn {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .number-btn:hover {
+            background-color: #2b6cb0;
+            transform: scale(1.05);
+        }
+        
+        .action-btn {
+            background-color: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 10px;
+        }
+        
+        .action-btn:hover {
+            background-color: #38a169;
+            transform: scale(1.05);
+        }
+        
+        #feedback {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 15px 0;
+            min-height: 30px;
+        }
+        
+        .correct {
+            color: #38a169;
+        }
+        
+        .incorrect {
+            color: #e53e3e;
+        }
+        
+        #stats {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background-color: #e6fffa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .stat-box {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c5282;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 8px;
+        }
+        
+        .difficulty-select {
+            margin: 10px 0;
+            padding: 10px;
+        }
+        
+        .zoom-control {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .zoom-control label {
+            margin-right: 10px;
+            min-width: 80px;
+        }
+        
+        .zoom-control input {
+            flex-grow: 1;
+        }
+        
+        .zoom-value {
+            margin-left: 10px;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .show-time-control {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .show-time-control label {
+            margin-right: 10px;
+            min-width: 110px;
+        }
+        
+        .show-time-control input {
+            flex-grow: 1;
+        }
+        
+        .show-time-value {
+            margin-left: 10px;
+            min-width: 60px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Colored Grid Focus Counting Game</h1>
+        
+        <div id="game-info">
+            <p id="level-display">Level: 1</p>
+        </div>
+        
+        <div id="instructions">
+            <p>Quickly count how many colored cells appear in the grid before it disappears.</p>
+        </div>
+        
+        <div id="canvas-container">
+            <canvas id="game-canvas"></canvas>
+            <div class="loading" id="loading">Loading...</div>
+            <div class="memory-indicator" id="memory-indicator">Memorize the grid!</div>
+        </div>
+        
+        <div id="feedback"></div>
+        
+        <div id="controls">
+            <!-- Removed the difficulty and shape type selectors -->
+            
+            <div class="difficulty-select">
+                <label for="challenge-level">Challenge Level: </label>
+                <select id="challenge-level">
+                    <option value="beginner">Beginner (Simple, Few)</option>
+                    <option value="easy">Easy (Simple, More)</option>
+                    <option value="medium">Medium (Advanced, Few)</option>
+                    <option value="hard">Hard (Advanced, Many)</option>
+                    <option value="expert">Expert (Complex, Many)</option>
+                </select>
+            </div>
+            
+            <div class="show-time-control">
+                <label for="show-time-slider">Display Time (s):</label>
+                <input type="range" id="show-time-slider" min="0.5" max="5" step="0.5" value="2">
+                <span id="show-time-value" class="show-time-value">2.0s</span>
+            </div>
+            
+            <div class="zoom-control">
+                <label for="zoom-slider">Zoom Level:</label>
+                <input type="range" id="zoom-slider" min="0.1" max="2" step="0.05" value="1">
+                <span id="zoom-value" class="zoom-value">1.0x</span>
+            </div>
+            
+            <div class="number-buttons">
+                <button class="number-btn" data-value="0">0</button>
+                <button class="number-btn" data-value="1">1</button>
+                <button class="number-btn" data-value="2">2</button>
+                <button class="number-btn" data-value="3">3</button>
+                <button class="number-btn" data-value="4">4</button>
+                <button class="number-btn" data-value="5">5</button>
+                <button class="number-btn" data-value="6">6</button>
+                <button class="number-btn" data-value="7">7</button>
+                <button class="number-btn" data-value="8">8</button>
+                <button class="number-btn" data-value="9">9</button>
+            </div>
+            
+            <button id="next-btn" class="action-btn">Next Shape</button>
+        </div>
+        
+        <div id="stats">
+            <div class="stat-box">
+                <p>Correct</p>
+                <div id="correct-count" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+                <p>Attempts</p>
+                <div id="total-attempts" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+                <p>Accuracy</p>
+                <div id="accuracy" class="stat-value">0%</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ColorSectionsGame {
+            constructor() {
+                // Game elements
+                this.canvas = document.getElementById('game-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.feedbackElement = document.getElementById('feedback');
+                this.nextButton = document.getElementById('next-btn');
+                this.numberButtons = document.querySelectorAll('.number-btn');
+                this.correctCountElement = document.getElementById('correct-count');
+                this.totalAttemptsElement = document.getElementById('total-attempts');
+                this.accuracyElement = document.getElementById('accuracy');
+                this.levelElement = document.getElementById('level-display');
+                // Removed difficultySelect and shapeTypeSelect
+                this.loadingElement = document.getElementById('loading');
+                this.zoomSlider = document.getElementById('zoom-slider');
+                this.zoomValueDisplay = document.getElementById('zoom-value');
+                this.showTimeSlider = document.getElementById('show-time-slider');
+                this.showTimeValue = document.getElementById('show-time-value');
+                this.memoryIndicator = document.getElementById('memory-indicator');
+                this.challengeLevelSelect = document.getElementById('challenge-level');
+                
+                // Audio elements for feedback
+                this.successSound = new Audio('success.wav');
+                this.failureSound = new Audio('failure.mp3');
+
+                // Game state
+                this.correctAnswer = 0;
+                this.level = 1;
+                this.correctCount = 0;
+                this.totalAttempts = 0;
+                this.selectedValue = null;
+                this.grid = [];
+                this.challengeLevel = 'beginner';
+                this.zoomFactor = 1.0;
+                this.displayTime = 2000; // 2 seconds by default
+                this.isGridVisible = false;
+                this.gridTimer = null;
+                this.sameGridOnWrong = false; // Flag to track if we should show the same grid on wrong answer
+                this.colors = [
+                    '#FF5733', '#33FF57', '#3357FF', '#FF33F5', 
+                    '#F5FF33', '#33FFF5', '#FF8033', '#8033FF'
+                ];
+
+                // Initialize the game
+                this.resizeCanvas();
+                this.initEventListeners();
+                this.startGame();
+            }
+
+            resizeCanvas() {
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+            }
+
+            initEventListeners() {
+                // Number button click handlers
+                this.numberButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        if (!this.isGridVisible) {
+                            const value = parseInt(button.getAttribute('data-value'));
+                            this.checkAnswer(value);
+                        }
+                    });
+                });
+                
+                // Next button click handler
+                this.nextButton.addEventListener('click', () => {
+                    if (!this.isGridVisible) {
+                        this.nextShape();
+                    }
+                });
+                
+                // Zoom slider change handler
+                this.zoomSlider.addEventListener('input', () => {
+                    this.zoomFactor = parseFloat(this.zoomSlider.value);
+                    this.zoomValueDisplay.textContent = this.zoomFactor.toFixed(1) + 'x';
+                    if (this.isGridVisible) {
+                        this.renderGrid();
+                    }
+                });
+
+                // Show time slider handler
+                this.showTimeSlider.addEventListener('input', () => {
+                    this.displayTime = parseFloat(this.showTimeSlider.value) * 1000;
+                    this.showTimeValue.textContent = parseFloat(this.showTimeSlider.value).toFixed(1) + 's';
+                });
+                
+                // Add window resize event listener
+                window.addEventListener('resize', () => this.resizeCanvas());
+
+                // Challenge level listener
+                this.challengeLevelSelect.addEventListener('change', () => {
+                    this.challengeLevel = this.challengeLevelSelect.value;
+                    this.nextShape();
+                });
+            }
+            
+            startGame() {
+                this.correctCount = 0;
+                this.totalAttempts = 0;
+                this.level = 1;
+                this.updateStats();
+                this.nextShape();
+            }
+            
+            generateShape() {
+                this.loadingElement.style.display = 'flex';
+                
+                if (!this.sameGridOnWrong) {
+                    // Clear previous grid
+                    this.grid = [];
+                    
+                    setTimeout(() => {
+                        // Use challenge level to determine grid type and complexity
+                        switch (this.challengeLevel) {
+                            case 'beginner':
+                                this.generateSimpleGrid(3); // Simple grid with max 3 colored cells
+                                break;
+                            case 'easy':
+                                this.generateSimpleGrid(5); // Simple grid with max 5 colored cells
+                                break;
+                            case 'medium':
+                                this.generateSimpleGrid(6); // Simple grid with max 6 colored cells
+                                break;
+                            case 'hard':
+                                this.generateSimpleGrid(7); // Simple grid with max 7 colored cells
+                                break;
+                            case 'expert':
+                                this.generateSimpleGrid(9); // Simple grid with max 9 colored cells
+                                break;
+                            default:
+                                this.generateSimpleGrid(3);
+                        }
+                        
+                        // Count colored cells
+                        this.correctAnswer = this.grid.filter(cell => cell.colored).length;
+                        
+                        // Show the grid briefly
+                        this.showGrid();
+                        this.loadingElement.style.display = 'none';
+                    }, 300);
+                } else {
+                    // Reset the flag for next time
+                    this.sameGridOnWrong = false;
+                    // Just show the same grid again
+                    setTimeout(() => {
+                        this.showGrid();
+                        this.loadingElement.style.display = 'none';
+                    }, 300);
+                }
+            }
+
+            showGrid() {
+                // Enable buttons again if they were disabled
+                this.setButtonsEnabled(false);
+                
+                // Show the grid
+                this.isGridVisible = true;
+                this.canvas.classList.remove('grid-hidden');
+                this.renderGrid();
+                
+                // Show the memory indicator
+                this.memoryIndicator.style.display = 'block';
+                this.memoryIndicator.textContent = 'Memorize the grid!';
+
+                // Set a timer to hide the grid after displayTime
+                clearTimeout(this.gridTimer);
+                this.gridTimer = setTimeout(() => {
+                    this.hideGrid();
+                }, this.displayTime);
+            }
+
+            hideGrid() {
+                this.isGridVisible = false;
+                this.canvas.classList.add('grid-hidden');
+                
+                // Clear the canvas
+                const ctx = this.ctx;
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Update the memory indicator
+                this.memoryIndicator.textContent = 'Select your answer!';
+                
+                // Enable number buttons
+                this.setButtonsEnabled(true);
+            }
+
+            setButtonsEnabled(enabled) {
+                this.numberButtons.forEach(button => {
+                    button.disabled = !enabled;
+                    if (enabled) {
+                        button.style.opacity = '1';
+                        button.style.cursor = 'pointer';
+                    } else {
+                        button.style.opacity = '0.5';
+                        button.style.cursor = 'not-allowed';
+                    }
+                });
+            }
+            
+            generateGrid() {
+                this.generateSimpleGrid(4); // Default to 4 max colored cells
+            }
+
+            generateSimpleGrid(maxColoredCells) {
+                // Create a 3x3 grid (9 cells)
+                this.grid = [];
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 3; col++) {
+                        this.grid.push({
+                            row: row,
+                            col: col,
+                            colored: false,
+                            color: null
+                        });
+                    }
+                }
+                
+                // Randomly determine how many cells to color (based on max)
+                const numColoredCells = Math.floor(Math.random() * maxColoredCells) + 1;
+                
+                // Randomly select cells to color
+                const indices = Array.from({ length: 9 }, (_, i) => i);
+                this.shuffleArray(indices);
+                
+                // Color the selected cells
+                for (let i = 0; i < numColoredCells; i++) {
+                    const index = indices[i];
+                    const colorIndex = Math.floor(Math.random() * this.colors.length);
+                    this.grid[index].colored = true;
+                    this.grid[index].color = this.colors[colorIndex];
+                }
+            }
+            
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+            
+            renderGrid() {
+                const ctx = this.ctx;
+                const canvas = this.canvas;
+                
+                // Clear the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Calculate grid dimensions
+                const gridSize = Math.min(canvas.width, canvas.height) * 0.8 * this.zoomFactor;
+                const cellSize = gridSize / 3;
+                const startX = (canvas.width - gridSize) / 2;
+                const startY = (canvas.height - gridSize) / 2;
+                
+                // Draw the grid
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                
+                // Draw cells
+                for (let i = 0; i < this.grid.length; i++) {
+                    const cell = this.grid[i];
+                    const x = startX + cell.col * cellSize;
+                    const y = startY + cell.row * cellSize;
+                    
+                    // Fill cell if colored
+                    if (cell.colored) {
+                        ctx.fillStyle = cell.color;
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+                    
+                    // Draw cell border
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                }
+            }
+            
+            checkAnswer(selectedValue) {
+                this.totalAttempts++;
+                this.selectedValue = selectedValue;
+                
+                const isCorrect = selectedValue === this.correctAnswer;
+                
+                if (isCorrect) {
+                    this.correctCount++;
+                    this.feedbackElement.textContent = 'Correct!';
+                    this.feedbackElement.className = 'correct';
+                    this.level++;
+                    this.successSound.play(); // Play success sound
+                    
+                    // Hide the memory indicator
+                    this.memoryIndicator.style.display = 'none';
+                    
+                    // Automatically go to next shape after a delay
+                    setTimeout(() => {
+                        this.nextShape();
+                    }, 1500);
+                } else {
+                    this.feedbackElement.textContent = 'Incorrect. Try again!';
+                    this.feedbackElement.className = 'incorrect';
+                    this.failureSound.play(); // Play failure sound
+                    
+                    // Set flag to show the same grid again
+                    this.sameGridOnWrong = true;
+                    
+                    // Show the grid again after a short delay
+                    setTimeout(() => {
+                        this.nextShape();
+                    }, 1500);
+                }
+                
+                this.levelElement.textContent = `Level: ${this.level}`;
+                this.updateStats();
+            }
+            
+            nextShape() {
+                this.feedbackElement.textContent = '';
+                this.feedbackElement.className = '';
+                this.generateShape();
+            }
+            
+            updateStats() {
+                this.correctCountElement.textContent = this.correctCount;
+                this.totalAttemptsElement.textContent = this.totalAttempts;
+                
+                const accuracy = this.totalAttempts === 0 ? 0 : Math.round((this.correctCount / this.totalAttempts) * 100);
+                this.accuracyElement.textContent = `${accuracy}%`;
+            }
+        }
+        
+        // Start the game when the page is loaded
+        window.addEventListener('load', () => {
+            const game = new ColorSectionsGame();
+        });
+    </script>
+</body>
+</html>
