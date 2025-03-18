@@ -305,92 +305,172 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
+
+        .screen {
+            width: 100%;
+            display: none;
+        }
+        
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .config-container {
+            width: 100%;
+            max-width: 400px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .config-title {
+            text-align: center;
+            color: #2c5282;
+            margin-bottom: 20px;
+        }
+        
+        .start-btn {
+            background-color: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 20px 0;
+        }
+        
+        .start-btn:hover {
+            background-color: #38a169;
+            transform: scale(1.05);
+        }
+
+        .preview-container {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        #preview-canvas {
+            width: 100%;
+            height: 100%;
+            background-color: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Colored Grid Focus Counting Game</h1>
         
-        <div id="game-info">
-            <p id="level-display">Level: 1</p>
-        </div>
-        
-        <div id="instructions">
-            <p>Quickly count how many colored cells appear in the grid before it disappears.</p>
-        </div>
-        
-        <div id="canvas-container">
-            <canvas id="game-canvas"></canvas>
-            <div class="loading" id="loading">Loading...</div>
-            <div class="memory-indicator" id="memory-indicator">Memorize the grid!</div>
-        </div>
-        
-        <div id="feedback"></div>
-        
-        <div id="controls">
-            <!-- Replace Challenge Level dropdown with slider -->
-            <div class="challenge-control">
-                <label for="challenge-level">Challenge Level:</label>
-                <input type="range" id="challenge-level" min="1" max="5" step="1" value="1">
-                <div class="challenge-labels">
-                    <span>Beginner</span>
-                    <span>Easy</span>
-                    <span>Medium</span>
-                    <span>Hard</span>
-                    <span>Expert</span>
+        <!-- Configuration Screen -->
+        <div id="config-screen" class="screen active">
+            <div class="config-container">
+                <h2 class="config-title">Game Settings</h2>
+                
+                <!-- Preview canvas -->
+                <div class="preview-container">
+                    <canvas id="preview-canvas"></canvas>
+                </div>
+                
+                <!-- Challenge Level -->
+                <div class="challenge-control">
+                    <label for="challenge-level-config">Challenge Level:</label>
+                    <input type="range" id="challenge-level-config" min="1" max="5" step="1" value="1">
+                    <div class="challenge-labels">
+                        <span>Beginner</span>
+                        <span>Easy</span>
+                        <span>Medium</span>
+                        <span>Hard</span>
+                        <span>Expert</span>
+                    </div>
+                </div>
+                
+                <!-- Color Mode -->
+                <div class="switch-container">
+                    <span>Single Color</span>
+                    <label class="switch">
+                        <input type="checkbox" id="color-mode-toggle-config">
+                        <span class="slider"></span>
+                    </label>
+                    <span>Multi Color</span>
+                </div>
+                
+                <!-- Display Time -->
+                <div class="show-time-control">
+                    <label for="show-time-slider-config">Display Time (s):</label>
+                    <input type="range" id="show-time-slider-config" min="0.5" max="5" step="0.5" value="2">
+                    <span id="show-time-value-config" class="show-time-value">2.0s</span>
+                </div>
+                
+                <!-- Zoom Level -->
+                <div class="zoom-control">
+                    <label for="zoom-slider-config">Zoom Level:</label>
+                    <input type="range" id="zoom-slider-config" min="0.1" max="2" step="0.05" value="1">
+                    <span id="zoom-value-config" class="zoom-value">1.0x</span>
                 </div>
             </div>
             
-            <!-- Replace Color Mode dropdown with toggle switch -->
-            <div class="switch-container">
-                <span>Single Color</span>
-                <label class="switch">
-                    <input type="checkbox" id="color-mode-toggle">
-                    <span class="slider"></span>
-                </label>
-                <span>Multi Color</span>
-            </div>
-            
-            <div class="show-time-control">
-                <label for="show-time-slider">Display Time (s):</label>
-                <input type="range" id="show-time-slider" min="0.5" max="5" step="0.5" value="2">
-                <span id="show-time-value" class="show-time-value">2.0s</span>
-            </div>
-            
-            <div class="zoom-control">
-                <label for="zoom-slider">Zoom Level:</label>
-                <input type="range" id="zoom-slider" min="0.1" max="2" step="0.05" value="1">
-                <span id="zoom-value" class="zoom-value">1.0x</span>
-            </div>
-            
-            <div class="number-buttons">
-                <button class="number-btn" data-value="0">0</button>
-                <button class="number-btn" data-value="1">1</button>
-                <button class="number-btn" data-value="2">2</button>
-                <button class="number-btn" data-value="3">3</button>
-                <button class="number-btn" data-value="4">4</button>
-                <button class="number-btn" data-value="5">5</button>
-                <button class="number-btn" data-value="6">6</button>
-                <button class="number-btn" data-value="7">7</button>
-                <button class="number-btn" data-value="8">8</button>
-                <button class="number-btn" data-value="9">9</button>
-            </div>
-            
-            <button id="next-btn" class="action-btn">Next Shape</button>
+            <button id="start-game-btn" class="start-btn">Start Game</button>
         </div>
         
-        <div id="stats">
-            <div class="stat-box">
-                <p>Correct</p>
-                <div id="correct-count" class="stat-value">0</div>
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div id="game-info">
+                <p id="level-display">Level: 1</p>
             </div>
-            <div class="stat-box">
-                <p>Attempts</p>
-                <div id="total-attempts" class="stat-value">0</div>
+            
+            <div id="instructions">
+                <p>Quickly count how many colored cells appear in the grid before it disappears.</p>
             </div>
-            <div class="stat-box">
-                <p>Accuracy</p>
-                <div id="accuracy" class="stat-value">0%</div>
+            
+            <div id="canvas-container">
+                <canvas id="game-canvas"></canvas>
+                <div class="loading" id="loading">Loading...</div>
+                <div class="memory-indicator" id="memory-indicator">Memorize the grid!</div>
+            </div>
+            
+            <div id="feedback"></div>
+            
+            <div id="controls">
+                <!-- Game controls moved to this section -->
+                <div class="number-buttons">
+                    <button class="number-btn" data-value="0">0</button>
+                    <button class="number-btn" data-value="1">1</button>
+                    <button class="number-btn" data-value="2">2</button>
+                    <button class="number-btn" data-value="3">3</button>
+                    <button class="number-btn" data-value="4">4</button>
+                    <button class="number-btn" data-value="5">5</button>
+                    <button class="number-btn" data-value="6">6</button>
+                    <button class="number-btn" data-value="7">7</button>
+                    <button class="number-btn" data-value="8">8</button>
+                    <button class="number-btn" data-value="9">9</button>
+                </div>
+                
+                <button id="next-btn" class="action-btn">Next Grid</button>
+                <button id="return-btn" class="action-btn">Return to Settings</button>
+            </div>
+            
+            <div id="stats">
+                <div class="stat-box">
+                    <p>Correct</p>
+                    <div id="correct-count" class="stat-value">0</div>
+                </div>
+                <div class="stat-box">
+                    <p>Attempts</p>
+                    <div id="total-attempts" class="stat-value">0</div>
+                </div>
+                <div class="stat-box">
+                    <p>Accuracy</p>
+                    <div id="accuracy" class="stat-value">0%</div>
+                </div>
             </div>
         </div>
     </div>
@@ -398,31 +478,41 @@
     <script>
         class ColorSectionsGame {
             constructor() {
+                // Screen elements
+                this.configScreen = document.getElementById('config-screen');
+                this.gameScreen = document.getElementById('game-screen');
+                
+                // Config elements
+                this.previewCanvas = document.getElementById('preview-canvas');
+                this.previewCtx = this.previewCanvas.getContext('2d');
+                this.challengeLevelConfig = document.getElementById('challenge-level-config');
+                this.colorModeToggleConfig = document.getElementById('color-mode-toggle-config');
+                this.showTimeSliderConfig = document.getElementById('show-time-slider-config');
+                this.showTimeValueConfig = document.getElementById('show-time-value-config');
+                this.zoomSliderConfig = document.getElementById('zoom-slider-config');
+                this.zoomValueConfig = document.getElementById('zoom-value-config');
+                this.startGameBtn = document.getElementById('start-game-btn');
+                
                 // Game elements
                 this.canvas = document.getElementById('game-canvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.feedbackElement = document.getElementById('feedback');
                 this.nextButton = document.getElementById('next-btn');
+                this.returnButton = document.getElementById('return-btn');
                 this.numberButtons = document.querySelectorAll('.number-btn');
                 this.correctCountElement = document.getElementById('correct-count');
                 this.totalAttemptsElement = document.getElementById('total-attempts');
                 this.accuracyElement = document.getElementById('accuracy');
                 this.levelElement = document.getElementById('level-display');
-                // Removed difficultySelect and shapeTypeSelect
                 this.loadingElement = document.getElementById('loading');
-                this.zoomSlider = document.getElementById('zoom-slider');
-                this.zoomValueDisplay = document.getElementById('zoom-value');
-                this.showTimeSlider = document.getElementById('show-time-slider');
-                this.showTimeValue = document.getElementById('show-time-value');
                 this.memoryIndicator = document.getElementById('memory-indicator');
-                this.challengeLevelSlider = document.getElementById('challenge-level');
-                this.colorModeToggle = document.getElementById('color-mode-toggle');
                 
                 // Audio elements for feedback
                 this.successSound = new Audio('success.wav');
                 this.failureSound = new Audio('failure.mp3');
 
                 // Game state
+                this.isPlaying = false;
                 this.correctAnswer = 0;
                 this.level = 1;
                 this.correctCount = 0;
@@ -430,38 +520,141 @@
                 this.selectedValue = null;
                 this.grid = [];
                 this.challengeLevel = 'beginner';
-                this.colorMode = 'single'; // Default to single color mode
+                this.colorMode = 'single';
                 this.zoomFactor = 1.0;
                 this.displayTime = 2000; // 2 seconds by default
                 this.isGridVisible = false;
                 this.gridTimer = null;
-                this.sameGridOnWrong = false; // Flag to track if we should show the same grid on wrong answer
+                this.sameGridOnWrong = false;
                 this.colors = [
                     '#FF5733', '#33FF57', '#3357FF', '#FF33F5', 
                     '#F5FF33', '#33FFF5', '#FF8033', '#8033FF'
                 ];
-                this.singleColor = '#3357FF'; // Blue color for single color mode
+                this.singleColor = '#3357FF';
 
                 // Initialize the game
-                this.resizeCanvas();
                 this.initEventListeners();
-                this.startGame();
+                this.updateConfigUI();
+                this.initPreviewCanvas();
+                this.updatePreview();
             }
 
-            resizeCanvas() {
-                const container = this.canvas.parentElement;
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
+            initPreviewCanvas() {
+                const container = this.previewCanvas.parentElement;
+                this.previewCanvas.width = container.clientWidth;
+                this.previewCanvas.height = container.clientHeight;
+            }
+
+            updatePreview() {
+                // Generate a preview grid based on current settings
+                const previewGrid = this.generatePreviewGrid();
+                this.renderPreviewGrid(previewGrid);
+            }
+
+            generatePreviewGrid() {
+                // Create a temporary grid for preview
+                const grid = [];
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 3; col++) {
+                        grid.push({
+                            row: row,
+                            col: col,
+                            colored: false,
+                            color: null
+                        });
+                    }
+                }
+                
+                // Determine max colored cells based on challenge level
+                let maxColoredCells = 3; // default beginner
+                const levelValue = parseInt(this.challengeLevelConfig.value);
+                switch(levelValue) {
+                    case 1: maxColoredCells = 3; break;
+                    case 2: maxColoredCells = 5; break; 
+                    case 3: maxColoredCells = 6; break;
+                    case 4: maxColoredCells = 7; break;
+                    case 5: maxColoredCells = 9; break;
+                }
+                
+                // Choose random number of cells to color
+                const numColoredCells = Math.floor(Math.random() * maxColoredCells) + 1;
+                
+                // Randomly select cells to color
+                const indices = Array.from({ length: 9 }, (_, i) => i);
+                this.shuffleArray(indices);
+                
+                // Color the selected cells
+                for (let i = 0; i < numColoredCells; i++) {
+                    const index = indices[i];
+                    const cell = grid[index];
+                    cell.colored = true;
+                    
+                    // Apply color based on config toggle
+                    if (!this.colorModeToggleConfig.checked) {
+                        cell.color = this.singleColor;
+                    } else {
+                        const colorIndex = Math.floor(Math.random() * this.colors.length);
+                        cell.color = this.colors[colorIndex];
+                    }
+                }
+                
+                return grid;
+            }
+
+            renderPreviewGrid(grid) {
+                const ctx = this.previewCtx;
+                const canvas = this.previewCanvas;
+                
+                // Clear the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Calculate grid dimensions with zoom
+                const zoomFactor = parseFloat(this.zoomSliderConfig.value);
+                const gridSize = Math.min(canvas.width, canvas.height) * 0.8 * zoomFactor;
+                const cellSize = gridSize / 3;
+                const startX = (canvas.width - gridSize) / 2;
+                const startY = (canvas.height - gridSize) / 2;
+                
+                // Draw the grid
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                
+                // Draw cells
+                for (let i = 0; i < grid.length; i++) {
+                    const cell = grid[i];
+                    const x = startX + cell.col * cellSize;
+                    const y = startY + cell.row * cellSize;
+                    
+                    // Fill cell if colored
+                    if (cell.colored) {
+                        ctx.fillStyle = cell.color;
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+                    
+                    // Draw cell border
+                    ctx.strokeRect(x, y, cellSize, cellSize);
+                }
             }
 
             initEventListeners() {
+                // Start button click handler
+                this.startGameBtn.addEventListener('click', () => {
+                    this.applyConfigSettings();
+                    this.showGameScreen();
+                    this.startGame();
+                });
+                
+                // Return to settings button
+                this.returnButton.addEventListener('click', () => {
+                    this.showConfigScreen();
+                });
+
                 // Number button click handlers
                 this.numberButtons.forEach(button => {
                     button.addEventListener('click', () => {
-                        if (!this.isGridVisible) {
-                            const value = parseInt(button.getAttribute('data-value'));
-                            this.checkAnswer(value);
-                        }
+                        // Remove check that prevents clicking when grid is visible
+                        const value = parseInt(button.getAttribute('data-value'));
+                        this.checkAnswer(value);
                     });
                 });
                 
@@ -472,54 +665,94 @@
                     }
                 });
                 
-                // Zoom slider change handler
-                this.zoomSlider.addEventListener('input', () => {
-                    this.zoomFactor = parseFloat(this.zoomSlider.value);
-                    this.zoomValueDisplay.textContent = this.zoomFactor.toFixed(1) + 'x';
-                    if (this.isGridVisible) {
-                        this.renderGrid();
-                    }
+                // Config elements event handlers
+                this.challengeLevelConfig.addEventListener('input', () => {
+                    this.updateConfigUI();
+                    this.updatePreview();
                 });
 
-                // Show time slider handler
-                this.showTimeSlider.addEventListener('input', () => {
-                    this.displayTime = parseFloat(this.showTimeSlider.value) * 1000;
-                    this.showTimeValue.textContent = parseFloat(this.showTimeSlider.value).toFixed(1) + 's';
+                this.colorModeToggleConfig.addEventListener('change', () => {
+                    this.updatePreview();
+                });
+
+                this.showTimeSliderConfig.addEventListener('input', () => {
+                    const displayTime = parseFloat(this.showTimeSliderConfig.value);
+                    this.showTimeValueConfig.textContent = displayTime.toFixed(1) + 's';
+                });
+                
+                this.zoomSliderConfig.addEventListener('input', () => {
+                    const zoomFactor = parseFloat(this.zoomSliderConfig.value);
+                    this.zoomValueConfig.textContent = zoomFactor.toFixed(1) + 'x';
+                    this.updatePreview();
                 });
                 
                 // Add window resize event listener
-                window.addEventListener('resize', () => this.resizeCanvas());
+                window.addEventListener('resize', () => {
+                    this.resizeCanvas();
+                    this.initPreviewCanvas();
+                    this.updatePreview();
+                });
+            }
 
-                // Challenge level listener
-                this.challengeLevelSlider.addEventListener('input', () => {
-                    const levelValue = parseInt(this.challengeLevelSlider.value);
-                    switch(levelValue) {
-                        case 1:
-                            this.challengeLevel = 'beginner';
-                            break;
-                        case 2:
-                            this.challengeLevel = 'easy';
-                            break;
-                        case 3:
-                            this.challengeLevel = 'medium';
-                            break;
-                        case 4:
-                            this.challengeLevel = 'hard';
-                            break;
-                        case 5:
-                            this.challengeLevel = 'expert';
-                            break;
-                        default:
-                            this.challengeLevel = 'beginner';
+            resizeCanvas() {
+                if (this.isPlaying) {
+                    const container = this.canvas.parentElement;
+                    this.canvas.width = container.clientWidth;
+                    this.canvas.height = container.clientHeight;
+                    
+                    if (this.isGridVisible) {
+                        this.renderGrid();
                     }
-                    this.nextShape();
-                });
-
-                // Color mode listener
-                this.colorModeToggle.addEventListener('change', () => {
-                    this.colorMode = this.colorModeToggle.checked ? 'multi' : 'single';
-                    this.nextShape();
-                });
+                }
+            }
+            
+            showConfigScreen() {
+                this.isPlaying = false;
+                this.configScreen.classList.add('active');
+                this.gameScreen.classList.remove('active');
+                
+                // Clear any game timers
+                clearTimeout(this.gridTimer);
+            }
+            
+            showGameScreen() {
+                this.isPlaying = true;
+                this.configScreen.classList.remove('active');
+                this.gameScreen.classList.add('active');
+                this.resizeCanvas();
+            }
+            
+            updateConfigUI() {
+                const levelValue = parseInt(this.challengeLevelConfig.value);
+                let levelName = '';
+                
+                switch(levelValue) {
+                    case 1: levelName = 'beginner'; break;
+                    case 2: levelName = 'easy'; break;
+                    case 3: levelName = 'medium'; break;
+                    case 4: levelName = 'hard'; break;
+                    case 5: levelName = 'expert'; break;
+                    default: levelName = 'beginner';
+                }
+                
+                this.challengeLevel = levelName;
+            }
+            
+            applyConfigSettings() {
+                // Apply all settings from config screen to game
+                const levelValue = parseInt(this.challengeLevelConfig.value);
+                switch(levelValue) {
+                    case 1: this.challengeLevel = 'beginner'; break;
+                    case 2: this.challengeLevel = 'easy'; break;
+                    case 3: this.challengeLevel = 'medium'; break;
+                    case 4: this.challengeLevel = 'hard'; break;
+                    case 5: this.challengeLevel = 'expert'; break;
+                    default: this.challengeLevel = 'beginner';
+                }
+                
+                this.colorMode = this.colorModeToggleConfig.checked ? 'multi' : 'single';
+                this.displayTime = parseFloat(this.showTimeSliderConfig.value) * 1000;
+                this.zoomFactor = parseFloat(this.zoomSliderConfig.value);
             }
             
             startGame() {
@@ -529,7 +762,8 @@
                 this.updateStats();
                 this.nextShape();
             }
-            
+
+            // The rest of the game logic remains mostly unchanged
             generateShape() {
                 this.loadingElement.style.display = 'flex';
                 
@@ -578,8 +812,8 @@
             }
 
             showGrid() {
-                // Enable buttons again if they were disabled
-                this.setButtonsEnabled(false);
+                // No longer disable buttons while grid is visible
+                // this.setButtonsEnabled(false);
                 
                 // Show the grid
                 this.isGridVisible = true;
@@ -598,6 +832,9 @@
             }
 
             hideGrid() {
+                // Only hide grid if it's still visible (user might have answered already)
+                if(!this.isGridVisible) return;
+                
                 this.isGridVisible = false;
                 this.canvas.classList.add('grid-hidden');
                 
@@ -607,9 +844,6 @@
                 
                 // Update the memory indicator
                 this.memoryIndicator.textContent = 'Select your answer!';
-                
-                // Enable number buttons
-                this.setButtonsEnabled(true);
             }
 
             setButtonsEnabled(enabled) {
@@ -709,10 +943,20 @@
             }
             
             checkAnswer(selectedValue) {
+                // Clear the grid timer - we don't need to hide it anymore
+                clearTimeout(this.gridTimer);
+                
                 this.totalAttempts++;
                 this.selectedValue = selectedValue;
                 
                 const isCorrect = selectedValue === this.correctAnswer;
+                
+                // Hide the grid if it's still visible
+                if (this.isGridVisible) {
+                    this.isGridVisible = false;
+                    this.canvas.classList.add('grid-hidden');
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                }
                 
                 if (isCorrect) {
                     this.correctCount++;
