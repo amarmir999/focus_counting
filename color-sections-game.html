@@ -226,6 +226,85 @@
             min-width: 60px;
             text-align: center;
         }
+
+        .challenge-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .challenge-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 5px;
+            font-size: 0.8rem;
+        }
+        
+        .challenge-labels span {
+            text-align: center;
+            width: 20%;
+        }
+        
+        /* Toggle Switch Styling */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 0 10px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
     </style>
 </head>
 <body>
@@ -249,17 +328,27 @@
         <div id="feedback"></div>
         
         <div id="controls">
-            <!-- Removed the difficulty and shape type selectors -->
+            <!-- Replace Challenge Level dropdown with slider -->
+            <div class="challenge-control">
+                <label for="challenge-level">Challenge Level:</label>
+                <input type="range" id="challenge-level" min="1" max="5" step="1" value="1">
+                <div class="challenge-labels">
+                    <span>Beginner</span>
+                    <span>Easy</span>
+                    <span>Medium</span>
+                    <span>Hard</span>
+                    <span>Expert</span>
+                </div>
+            </div>
             
-            <div class="difficulty-select">
-                <label for="challenge-level">Challenge Level: </label>
-                <select id="challenge-level">
-                    <option value="beginner">Beginner (Simple, Few)</option>
-                    <option value="easy">Easy (Simple, More)</option>
-                    <option value="medium">Medium (Advanced, Few)</option>
-                    <option value="hard">Hard (Advanced, Many)</option>
-                    <option value="expert">Expert (Complex, Many)</option>
-                </select>
+            <!-- Replace Color Mode dropdown with toggle switch -->
+            <div class="switch-container">
+                <span>Single Color</span>
+                <label class="switch">
+                    <input type="checkbox" id="color-mode-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span>Multi Color</span>
             </div>
             
             <div class="show-time-control">
@@ -326,7 +415,8 @@
                 this.showTimeSlider = document.getElementById('show-time-slider');
                 this.showTimeValue = document.getElementById('show-time-value');
                 this.memoryIndicator = document.getElementById('memory-indicator');
-                this.challengeLevelSelect = document.getElementById('challenge-level');
+                this.challengeLevelSlider = document.getElementById('challenge-level');
+                this.colorModeToggle = document.getElementById('color-mode-toggle');
                 
                 // Audio elements for feedback
                 this.successSound = new Audio('success.wav');
@@ -340,6 +430,7 @@
                 this.selectedValue = null;
                 this.grid = [];
                 this.challengeLevel = 'beginner';
+                this.colorMode = 'single'; // Default to single color mode
                 this.zoomFactor = 1.0;
                 this.displayTime = 2000; // 2 seconds by default
                 this.isGridVisible = false;
@@ -349,6 +440,7 @@
                     '#FF5733', '#33FF57', '#3357FF', '#FF33F5', 
                     '#F5FF33', '#33FFF5', '#FF8033', '#8033FF'
                 ];
+                this.singleColor = '#3357FF'; // Blue color for single color mode
 
                 // Initialize the game
                 this.resizeCanvas();
@@ -399,8 +491,33 @@
                 window.addEventListener('resize', () => this.resizeCanvas());
 
                 // Challenge level listener
-                this.challengeLevelSelect.addEventListener('change', () => {
-                    this.challengeLevel = this.challengeLevelSelect.value;
+                this.challengeLevelSlider.addEventListener('input', () => {
+                    const levelValue = parseInt(this.challengeLevelSlider.value);
+                    switch(levelValue) {
+                        case 1:
+                            this.challengeLevel = 'beginner';
+                            break;
+                        case 2:
+                            this.challengeLevel = 'easy';
+                            break;
+                        case 3:
+                            this.challengeLevel = 'medium';
+                            break;
+                        case 4:
+                            this.challengeLevel = 'hard';
+                            break;
+                        case 5:
+                            this.challengeLevel = 'expert';
+                            break;
+                        default:
+                            this.challengeLevel = 'beginner';
+                    }
+                    this.nextShape();
+                });
+
+                // Color mode listener
+                this.colorModeToggle.addEventListener('change', () => {
+                    this.colorMode = this.colorModeToggle.checked ? 'multi' : 'single';
                     this.nextShape();
                 });
             }
@@ -536,9 +653,16 @@
                 // Color the selected cells
                 for (let i = 0; i < numColoredCells; i++) {
                     const index = indices[i];
-                    const colorIndex = Math.floor(Math.random() * this.colors.length);
-                    this.grid[index].colored = true;
-                    this.grid[index].color = this.colors[colorIndex];
+                    const cell = this.grid[index];
+                    cell.colored = true;
+                    
+                    // Apply color based on color mode
+                    if (this.colorMode === 'single') {
+                        cell.color = this.singleColor;
+                    } else {
+                        const colorIndex = Math.floor(Math.random() * this.colors.length);
+                        cell.color = this.colors[colorIndex];
+                    }
                 }
             }
             
