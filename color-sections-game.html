@@ -47,8 +47,9 @@
         }
         
         #canvas-container {
-            width: 500px;
-            height: 400px;
+            width: 100%;
+            height: 50vh;
+            min-height: 400px;
             position: relative;
             margin-bottom: 20px;
         }
@@ -319,9 +320,9 @@
         
         .config-container {
             width: 100%;
-            max-width: 400px;
+            max-width: 600px; /* Increased max-width */
             background-color: #f8f9fa;
-            padding: 20px;
+            padding: 30px; /* Increased padding */
             border-radius: 10px;
             margin-bottom: 20px;
         }
@@ -350,8 +351,9 @@
         }
 
         .preview-container {
-            width: 200px;
-            height: 200px;
+            width: 100%;
+            height: 40vh;
+            min-height: 300px;
             position: relative;
             margin: 20px auto;
             border: 1px solid #ccc;
@@ -364,11 +366,28 @@
             height: 100%;
             background-color: white;
         }
+
+        .shape-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        
+        .select-control {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Colored Grid Focus Counting Game</h1>
         
         <!-- Configuration Screen -->
         <div id="config-screen" class="screen active">
@@ -378,6 +397,17 @@
                 <!-- Preview canvas -->
                 <div class="preview-container">
                     <canvas id="preview-canvas"></canvas>
+                </div>
+                
+                <!-- Shape Pattern -->
+                <div class="shape-control">
+                    <label for="shape-type-config">Shape Pattern:</label>
+                    <select id="shape-type-config" class="select-control">
+                        <option value="grid">3x3 Grid</option>
+                        <option value="circle">Circle</option>
+                        <option value="triangle">Triangle</option>
+                        <option value="random">Random</option>
+                    </select>
                 </div>
                 
                 <!-- Challenge Level -->
@@ -406,14 +436,14 @@
                 <!-- Display Time -->
                 <div class="show-time-control">
                     <label for="show-time-slider-config">Display Time (s):</label>
-                    <input type="range" id="show-time-slider-config" min="0.5" max="5" step="0.5" value="2">
+                    <input type="range" id="show-time-slider-config" min="0.1" max="5" step="0.5" value="2">
                     <span id="show-time-value-config" class="show-time-value">2.0s</span>
                 </div>
                 
                 <!-- Zoom Level -->
                 <div class="zoom-control">
                     <label for="zoom-slider-config">Zoom Level:</label>
-                    <input type="range" id="zoom-slider-config" min="0.1" max="2" step="0.05" value="1">
+                    <input type="range" id="zoom-slider-config" min="0.1" max="1" step="0.05" value="1">
                     <span id="zoom-value-config" class="zoom-value">1.0x</span>
                 </div>
             </div>
@@ -423,13 +453,6 @@
         
         <!-- Game Screen -->
         <div id="game-screen" class="screen">
-            <div id="game-info">
-                <p id="level-display">Level: 1</p>
-            </div>
-            
-            <div id="instructions">
-                <p>Quickly count how many colored cells appear in the grid before it disappears.</p>
-            </div>
             
             <div id="canvas-container">
                 <canvas id="game-canvas"></canvas>
@@ -493,6 +516,12 @@
                 this.zoomValueConfig = document.getElementById('zoom-value-config');
                 this.startGameBtn = document.getElementById('start-game-btn');
                 
+                // Add shape type config reference
+                this.shapeTypeConfig = document.getElementById('shape-type-config');
+                
+                // Add shape type to game state
+                this.shapeType = 'grid';
+                
                 // Game elements
                 this.canvas = document.getElementById('game-canvas');
                 this.ctx = this.canvas.getContext('2d');
@@ -552,53 +581,20 @@
             }
 
             generatePreviewGrid() {
-                // Create a temporary grid for preview
-                const grid = [];
-                for (let row = 0; row < 3; row++) {
-                    for (let col = 0; col < 3; col++) {
-                        grid.push({
-                            row: row,
-                            col: col,
-                            colored: false,
-                            color: null
-                        });
-                    }
+                // Use shape type to select generation method
+                const shapeType = this.shapeTypeConfig.value;
+                
+                if (shapeType === 'grid') {
+                    return this.generateGridShape();
+                } else if (shapeType === 'circle') {
+                    return this.generateCircleShape();
+                } else if (shapeType === 'triangle') {
+                    return this.generateTriangleShape();
+                } else if (shapeType === 'random') {
+                    return this.generateRandomShape();
+                } else {
+                    return this.generateGridShape(); // Default
                 }
-                
-                // Determine max colored cells based on challenge level
-                let maxColoredCells = 3; // default beginner
-                const levelValue = parseInt(this.challengeLevelConfig.value);
-                switch(levelValue) {
-                    case 1: maxColoredCells = 3; break;
-                    case 2: maxColoredCells = 5; break; 
-                    case 3: maxColoredCells = 6; break;
-                    case 4: maxColoredCells = 7; break;
-                    case 5: maxColoredCells = 9; break;
-                }
-                
-                // Choose random number of cells to color
-                const numColoredCells = Math.floor(Math.random() * maxColoredCells) + 1;
-                
-                // Randomly select cells to color
-                const indices = Array.from({ length: 9 }, (_, i) => i);
-                this.shuffleArray(indices);
-                
-                // Color the selected cells
-                for (let i = 0; i < numColoredCells; i++) {
-                    const index = indices[i];
-                    const cell = grid[index];
-                    cell.colored = true;
-                    
-                    // Apply color based on config toggle
-                    if (!this.colorModeToggleConfig.checked) {
-                        cell.color = this.singleColor;
-                    } else {
-                        const colorIndex = Math.floor(Math.random() * this.colors.length);
-                        cell.color = this.colors[colorIndex];
-                    }
-                }
-                
-                return grid;
             }
 
             renderPreviewGrid(grid) {
@@ -608,31 +604,51 @@
                 // Clear the canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Calculate grid dimensions with zoom
+                // Get the zoom factor for preview
                 const zoomFactor = parseFloat(this.zoomSliderConfig.value);
-                const gridSize = Math.min(canvas.width, canvas.height) * 0.8 * zoomFactor;
-                const cellSize = gridSize / 3;
-                const startX = (canvas.width - gridSize) / 2;
-                const startY = (canvas.height - gridSize) / 2;
                 
-                // Draw the grid
+                // Calculate a base cell size that remains constant regardless of zoom
+                const minDimension = Math.min(canvas.width, canvas.height);
+                const cellSize = minDimension * 0.03; // Reduced from 0.08 to make elements smaller
+                
+                // Setup for drawing
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2;
                 
-                // Draw cells
+                // Draw the cells
                 for (let i = 0; i < grid.length; i++) {
                     const cell = grid[i];
-                    const x = startX + cell.col * cellSize;
-                    const y = startY + cell.row * cellSize;
                     
-                    // Fill cell if colored
-                    if (cell.colored) {
-                        ctx.fillStyle = cell.color;
-                        ctx.fillRect(x, y, cellSize, cellSize);
+                    // Calculate position - apply zoom to the area, not the cell size
+                    // Convert normalized coordinates (affected by zoom) to canvas coordinates
+                    const normalizedX = (cell.x - 0.5) * zoomFactor + 0.5;
+                    const normalizedY = (cell.y - 0.5) * zoomFactor + 0.5;
+                    
+                    const x = normalizedX * canvas.width;
+                    const y = normalizedY * canvas.height;
+                    
+                    if (cell.shape === 'circle') {
+                        // Draw circle with fixed size
+                        ctx.beginPath();
+                        ctx.arc(x, y, cellSize/2, 0, Math.PI * 2);
+                        
+                        if (cell.colored) {
+                            ctx.fillStyle = cell.color;
+                            ctx.fill();
+                        }
+                        
+                        ctx.stroke();
+                    } else {
+                        // Draw square with fixed size
+                        const halfSize = cellSize / 2;
+                        
+                        if (cell.colored) {
+                            ctx.fillStyle = cell.color;
+                            ctx.fillRect(x - halfSize, y - halfSize, cellSize, cellSize);
+                        }
+                        
+                        ctx.strokeRect(x - halfSize, y - halfSize, cellSize, cellSize);
                     }
-                    
-                    // Draw cell border
-                    ctx.strokeRect(x, y, cellSize, cellSize);
                 }
             }
 
@@ -683,6 +699,11 @@
                 this.zoomSliderConfig.addEventListener('input', () => {
                     const zoomFactor = parseFloat(this.zoomSliderConfig.value);
                     this.zoomValueConfig.textContent = zoomFactor.toFixed(1) + 'x';
+                    this.updatePreview();
+                });
+                
+                // Shape type change handler
+                this.shapeTypeConfig.addEventListener('change', () => {
                     this.updatePreview();
                 });
                 
@@ -753,6 +774,7 @@
                 this.colorMode = this.colorModeToggleConfig.checked ? 'multi' : 'single';
                 this.displayTime = parseFloat(this.showTimeSliderConfig.value) * 1000;
                 this.zoomFactor = parseFloat(this.zoomSliderConfig.value);
+                this.shapeType = this.shapeTypeConfig.value;
             }
             
             startGame() {
@@ -772,25 +794,22 @@
                     this.grid = [];
                     
                     setTimeout(() => {
-                        // Use challenge level to determine grid type and complexity
-                        switch (this.challengeLevel) {
-                            case 'beginner':
-                                this.generateSimpleGrid(3); // Simple grid with max 3 colored cells
+                        // Use shape type for main game
+                        switch (this.shapeType) {
+                            case 'grid':
+                                this.grid = this.generateGridShape();
                                 break;
-                            case 'easy':
-                                this.generateSimpleGrid(5); // Simple grid with max 5 colored cells
+                            case 'circle':
+                                this.grid = this.generateCircleShape();
                                 break;
-                            case 'medium':
-                                this.generateSimpleGrid(6); // Simple grid with max 6 colored cells
+                            case 'triangle':
+                                this.grid = this.generateTriangleShape();
                                 break;
-                            case 'hard':
-                                this.generateSimpleGrid(7); // Simple grid with max 7 colored cells
-                                break;
-                            case 'expert':
-                                this.generateSimpleGrid(9); // Simple grid with max 9 colored cells
+                            case 'random':
+                                this.grid = this.generateRandomShape();
                                 break;
                             default:
-                                this.generateSimpleGrid(3);
+                                this.grid = this.generateGridShape();
                         }
                         
                         // Count colored cells
@@ -915,30 +934,47 @@
                 // Clear the canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Calculate grid dimensions
-                const gridSize = Math.min(canvas.width, canvas.height) * 0.8 * this.zoomFactor;
-                const cellSize = gridSize / 3;
-                const startX = (canvas.width - gridSize) / 2;
-                const startY = (canvas.height - gridSize) / 2;
+                // Calculate a fixed cell size that doesn't change with zoom
+                const minDimension = Math.min(canvas.width, canvas.height);
+                const cellSize = minDimension * 0.03; // Reduced from 0.08 to make elements smaller
                 
-                // Draw the grid
                 ctx.strokeStyle = '#000';
                 ctx.lineWidth = 2;
                 
-                // Draw cells
+                // Draw cells with fixed size but positions affected by zoom
                 for (let i = 0; i < this.grid.length; i++) {
                     const cell = this.grid[i];
-                    const x = startX + cell.col * cellSize;
-                    const y = startY + cell.row * cellSize;
                     
-                    // Fill cell if colored
-                    if (cell.colored) {
-                        ctx.fillStyle = cell.color;
-                        ctx.fillRect(x, y, cellSize, cellSize);
+                    // Apply zoom to position, not size
+                    const normalizedX = (cell.x - 0.5) * this.zoomFactor + 0.5;
+                    const normalizedY = (cell.y - 0.5) * this.zoomFactor + 0.5;
+                    
+                    // Convert to canvas coordinates
+                    const x = normalizedX * canvas.width;
+                    const y = normalizedY * canvas.height;
+                    
+                    if (cell.shape === 'circle') {
+                        // Draw circle
+                        ctx.beginPath();
+                        ctx.arc(x, y, cellSize/2, 0, Math.PI * 2);
+                        
+                        if (cell.colored) {
+                            ctx.fillStyle = cell.color;
+                            ctx.fill();
+                        }
+                        
+                        ctx.stroke();
+                    } else {
+                        // Draw square
+                        const halfSize = cellSize / 2;
+                        
+                        if (cell.colored) {
+                            ctx.fillStyle = cell.color;
+                            ctx.fillRect(x - halfSize, y - halfSize, cellSize, cellSize);
+                        }
+                        
+                        ctx.strokeRect(x - halfSize, y - halfSize, cellSize, cellSize);
                     }
-                    
-                    // Draw cell border
-                    ctx.strokeRect(x, y, cellSize, cellSize);
                 }
             }
             
@@ -1002,6 +1038,200 @@
                 
                 const accuracy = this.totalAttempts === 0 ? 0 : Math.round((this.correctCount / this.totalAttempts) * 100);
                 this.accuracyElement.textContent = `${accuracy}%`;
+            }
+
+            generateGridShape() {
+                // Create a 3x3 grid with proper positioning
+                const grid = [];
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 3; col++) {
+                        grid.push({
+                            row: row,
+                            col: col,
+                            // Add padding (0.1) and distribute cells more evenly (0.8/2 = 0.4)
+                            // This ensures cells stay within the canvas at zoom level 1.0
+                            x: 0.1 + col * 0.4,
+                            y: 0.1 + row * 0.4,
+                            colored: false,
+                            color: null,
+                            shape: 'square'
+                        });
+                    }
+                }
+                
+                // Determine maximum colored cells and color them
+                const maxColoredCells = this.getMaxColoredCellsFromLevel();
+                this.colorRandomCells(grid, maxColoredCells);
+                
+                return grid;
+            }
+
+            generateCircleShape() {
+                const grid = [];
+                
+                // Center cell
+                grid.push({ x: 0.5, y: 0.5, colored: false, color: null, shape: 'circle' });
+                
+                // Outer circle - 8 cells in a circle
+                // Radius is not affected by zoom here - zoom will be applied during render
+                const radius = 0.35;
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    grid.push({
+                        x: 0.5 + radius * Math.cos(angle),
+                        y: 0.5 + radius * Math.sin(angle),
+                        colored: false,
+                        color: null,
+                        shape: 'circle'
+                    });
+                }
+                
+                const maxColoredCells = this.getMaxColoredCellsFromLevel();
+                this.colorRandomCells(grid, maxColoredCells);
+                
+                return grid;
+            }
+            
+            generateTriangleShape() {
+                const grid = [];
+                
+                // Create a triangle pattern with 10 cells
+                // Top of triangle
+                grid.push({ x: 0.5, y: 0.1, colored: false, color: null, shape: 'circle' });
+                
+                // Second row
+                grid.push({ x: 0.35, y: 0.3, colored: false, color: null, shape: 'circle' });
+                grid.push({ x: 0.65, y: 0.3, colored: false, color: null, shape: 'circle' });
+                
+                // Third row
+                grid.push({ x: 0.25, y: 0.5, colored: false, color: null, shape: 'circle' });
+                grid.push({ x: 0.5, y: 0.5, colored: false, color: null, shape: 'circle' });
+                grid.push({ x: 0.75, y: 0.5, colored: false, color: null, shape: 'circle' });
+                
+                // Fourth row (base)
+                grid.push({ x: 0.15, y: 0.7, colored: false, color: null, shape: 'circle' });
+                grid.push({ x: 0.38, y: 0.7, colored: false, color: null, shape: 'circle' });
+                grid.push({ x: 0.62, y: 0.7, colored: false, color: null, shape: 'circle' });
+                grid.push({ x: 0.85, y: 0.7, colored: false, color: null, shape: 'circle' });
+                
+                const maxColoredCells = this.getMaxColoredCellsFromLevel();
+                this.colorRandomCells(grid, maxColoredCells);
+                
+                return grid;
+            }
+            
+            generateRandomShape() {
+                const grid = [];
+                const cellCount = 9; // Keep consistent with other shapes
+                
+                // Create cells with random positions
+                for (let i = 0; i < cellCount; i++) {
+                    // Create with padding from edges to avoid cut-off
+                    grid.push({
+                        x: 0.1 + Math.random() * 0.8,
+                        y: 0.1 + Math.random() * 0.8,
+                        colored: false,
+                        color: null,
+                        shape: 'circle'
+                    });
+                }
+                
+                const maxColoredCells = this.getMaxColoredCellsFromLevel();
+                this.colorRandomCells(grid, maxColoredCells);
+                
+                return grid;
+            }
+            
+            getMaxColoredCellsFromLevel() {
+                // Helper to get max colored cells based on challenge level
+                let maxColoredCells = 3; // default beginner
+                const levelValue = parseInt(this.challengeLevelConfig.value);
+                switch(levelValue) {
+                    case 1: maxColoredCells = 3; break;
+                    case 2: maxColoredCells = 5; break; 
+                    case 3: maxColoredCells = 6; break;
+                    case 4: maxColoredCells = 7; break;
+                    case 5: maxColoredCells = 9; break;
+                }
+                return maxColoredCells;
+            }
+            
+            colorRandomCells(grid, maxColoredCells) {
+                // Helper to color random cells in any shape
+                // Randomly determine how many cells to color
+                const numColoredCells = Math.floor(Math.random() * maxColoredCells) + 1;
+                
+                // Randomly select cells to color
+                const indices = Array.from({ length: grid.length }, (_, i) => i);
+                this.shuffleArray(indices);
+                
+                // Color the selected cells
+                for (let i = 0; i < numColoredCells; i++) {
+                    const index = indices[i];
+                    const cell = grid[index];
+                    cell.colored = true;
+                    
+                    // Apply color based on config toggle
+                    if (!this.colorModeToggleConfig.checked) {
+                        cell.color = this.singleColor;
+                    } else {
+                        const colorIndex = Math.floor(Math.random() * this.colors.length);
+                        cell.color = this.colors[colorIndex];
+                    }
+                }
+            }
+
+            // Update the main rendering to handle different shapes with consistent cell size
+            renderGrid() {
+                const ctx = this.ctx;
+                const canvas = this.canvas;
+                
+                // Clear the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Calculate a fixed cell size that doesn't change with zoom
+                const minDimension = Math.min(canvas.width, canvas.height);
+                const cellSize = minDimension * 0.03; // Reduced from 0.08 to make elements smaller
+                
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                
+                // Draw cells with fixed size but positions affected by zoom
+                for (let i = 0; i < this.grid.length; i++) {
+                    const cell = this.grid[i];
+                    
+                    // Apply zoom to position, not size
+                    // For zoom < 1, cells move toward center; for zoom > 1, they move toward edges
+                    const normalizedX = (cell.x - 0.5) * this.zoomFactor + 0.5;
+                    const normalizedY = (cell.y - 0.5) * this.zoomFactor + 0.5;
+                    
+                    // Convert to canvas coordinates
+                    const x = normalizedX * canvas.width;
+                    const y = normalizedY * canvas.height;
+                    
+                    if (cell.shape === 'circle') {
+                        // Draw circle
+                        ctx.beginPath();
+                        ctx.arc(x, y, cellSize/2, 0, Math.PI * 2);
+                        
+                        if (cell.colored) {
+                            ctx.fillStyle = cell.color;
+                            ctx.fill();
+                        }
+                        
+                        ctx.stroke();
+                    } else {
+                        // Draw square
+                        const halfSize = cellSize / 2;
+                        
+                        if (cell.colored) {
+                            ctx.fillStyle = cell.color;
+                            ctx.fillRect(x - halfSize, y - halfSize, cellSize, cellSize);
+                        }
+                        
+                        ctx.strokeRect(x - halfSize, y - halfSize, cellSize, cellSize);
+                    }
+                }
             }
         }
         
