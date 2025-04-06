@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Colored Grid Focus Counting Game</title>
+    <title>משחק ספירה וזיכרון צבעוני</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -392,7 +392,7 @@
         <!-- Configuration Screen -->
         <div id="config-screen" class="screen active">
             <div class="config-container">
-                <h2 class="config-title">Game Settings</h2>
+                <h2 class="config-title">הגדרות משחק</h2>
                 
                 <!-- Preview canvas -->
                 <div class="preview-container">
@@ -401,54 +401,54 @@
                 
                 <!-- Shape Pattern -->
                 <div class="shape-control">
-                    <label for="shape-type-config">Shape Pattern:</label>
+                    <label for="shape-type-config">צורת הדפוס:</label>
                     <select id="shape-type-config" class="select-control">
-                        <option value="grid">3x3 Grid</option>
-                        <option value="circle">Circle</option>
-                        <option value="triangle">Triangle</option>
-                        <option value="random">Random</option>
+                        <option value="grid">רשת 3x3</option>
+                        <option value="circle">מעגל</option>
+                        <option value="triangle">משולש</option>
+                        <option value="random">אקראי</option>
                     </select>
                 </div>
                 
                 <!-- Challenge Level -->
                 <div class="challenge-control">
-                    <label for="challenge-level-config">Challenge Level:</label>
+                    <label for="challenge-level-config">רמת אתגר:</label>
                     <input type="range" id="challenge-level-config" min="1" max="5" step="1" value="1">
                     <div class="challenge-labels">
-                        <span>Beginner</span>
-                        <span>Easy</span>
-                        <span>Medium</span>
-                        <span>Hard</span>
-                        <span>Expert</span>
+                        <span>מתחיל</span>
+                        <span>קל</span>
+                        <span>בינוני</span>
+                        <span>קשה</span>
+                        <span>מומחה</span>
                     </div>
                 </div>
                 
                 <!-- Color Mode -->
                 <div class="switch-container">
-                    <span>Single Color</span>
+                    <span>צבע אחד</span>
                     <label class="switch">
                         <input type="checkbox" id="color-mode-toggle-config">
                         <span class="slider"></span>
                     </label>
-                    <span>Multi Color</span>
+                    <span>צבעים מרובים</span>
                 </div>
                 
                 <!-- Display Time -->
                 <div class="show-time-control">
-                    <label for="show-time-slider-config">Display Time (s):</label>
+                    <label for="show-time-slider-config">זמן תצוגה (שניות):</label>
                     <input type="range" id="show-time-slider-config" min="0.1" max="5" step="0.5" value="2">
-                    <span id="show-time-value-config" class="show-time-value">2.0s</span>
+                    <span id="show-time-value-config" class="show-time-value">2.0 שניות</span>
                 </div>
                 
                 <!-- Zoom Level -->
                 <div class="zoom-control">
-                    <label for="zoom-slider-config">Zoom Level:</label>
+                    <label for="zoom-slider-config">רמת זום:</label>
                     <input type="range" id="zoom-slider-config" min="0.1" max="1" step="0.05" value="1">
                     <span id="zoom-value-config" class="zoom-value">1.0x</span>
                 </div>
             </div>
             
-            <button id="start-game-btn" class="start-btn">Start Game</button>
+            <button id="start-game-btn" class="start-btn">התחל משחק</button>
         </div>
         
         <!-- Game Screen -->
@@ -456,8 +456,8 @@
             
             <div id="canvas-container">
                 <canvas id="game-canvas"></canvas>
-                <div class="loading" id="loading">Loading...</div>
-                <div class="memory-indicator" id="memory-indicator">Memorize the grid!</div>
+                <div class="loading" id="loading">טוען...</div>
+                <div class="memory-indicator" id="memory-indicator">זכור את הצורה!</div>
             </div>
             
             <div id="feedback"></div>
@@ -477,21 +477,21 @@
                     <button class="number-btn" data-value="9">9</button>
                 </div>
                 
-                <button id="next-btn" class="action-btn">Next Grid</button>
-                <button id="return-btn" class="action-btn">Return to Settings</button>
+                <button id="next-btn" class="action-btn">צורה הבאה</button>
+                <button id="return-btn" class="action-btn">חזרה להגדרות</button>
             </div>
             
             <div id="stats">
                 <div class="stat-box">
-                    <p>Correct</p>
+                    <p>נכון</p>
                     <div id="correct-count" class="stat-value">0</div>
                 </div>
                 <div class="stat-box">
-                    <p>Attempts</p>
+                    <p>ניסיונות</p>
                     <div id="total-attempts" class="stat-value">0</div>
                 </div>
                 <div class="stat-box">
-                    <p>Accuracy</p>
+                    <p>דיוק</p>
                     <div id="accuracy" class="stat-value">0%</div>
                 </div>
             </div>
@@ -566,6 +566,10 @@
                 this.updateConfigUI();
                 this.initPreviewCanvas();
                 this.updatePreview();
+
+                // Update Hebrew text for display elements
+                this.showTimeValueConfig.textContent = "2.0 שניות";
+                this.zoomValueConfig.textContent = "1.0x";
             }
 
             initPreviewCanvas() {
@@ -693,7 +697,7 @@
 
                 this.showTimeSliderConfig.addEventListener('input', () => {
                     const displayTime = parseFloat(this.showTimeSliderConfig.value);
-                    this.showTimeValueConfig.textContent = displayTime.toFixed(1) + 's';
+                    this.showTimeValueConfig.textContent = displayTime.toFixed(1) + ' שניות';
                 });
                 
                 this.zoomSliderConfig.addEventListener('input', () => {
@@ -839,9 +843,9 @@
                 this.canvas.classList.remove('grid-hidden');
                 this.renderGrid();
                 
-                // Show the memory indicator
+                // Show the memory indicator with Hebrew text
                 this.memoryIndicator.style.display = 'block';
-                this.memoryIndicator.textContent = 'Memorize the grid!';
+                this.memoryIndicator.textContent = 'זכור את הצורה!';
 
                 // Set a timer to hide the grid after displayTime
                 clearTimeout(this.gridTimer);
@@ -862,7 +866,7 @@
                 ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 
                 // Update the memory indicator
-                this.memoryIndicator.textContent = 'Select your answer!';
+                this.memoryIndicator.textContent = 'בחר את התשובה שלך!';
             }
 
             setButtonsEnabled(enabled) {
@@ -996,7 +1000,7 @@
                 
                 if (isCorrect) {
                     this.correctCount++;
-                    this.feedbackElement.textContent = 'Correct!';
+                    this.feedbackElement.textContent = 'נכון!';
                     this.feedbackElement.className = 'correct';
                     this.level++;
                     this.successSound.play(); // Play success sound
@@ -1009,7 +1013,7 @@
                         this.nextShape();
                     }, 1500);
                 } else {
-                    this.feedbackElement.textContent = 'Incorrect. Try again!';
+                    this.feedbackElement.textContent = 'לא נכון. נסה שוב!';
                     this.feedbackElement.className = 'incorrect';
                     this.failureSound.play(); // Play failure sound
                     
@@ -1022,7 +1026,7 @@
                     }, 1500);
                 }
                 
-                this.levelElement.textContent = `Level: ${this.level}`;
+                this.levelElement.textContent = `רמה: ${this.level}`;
                 this.updateStats();
             }
             
